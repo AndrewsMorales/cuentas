@@ -9,7 +9,23 @@
             <h1 class="page-title">Gastos</h1>
             <div class="page-subtitle">{{ $budget->label() }}</div>
         </div>
-        <div class="d-flex gap-2 align-items-center flex-wrap">
+        @php
+            $assignedQ1 = (float) $expenses->where('fortnight', 1)->whereNotNull('person_id')->sum('amount');
+            $assignedQ2 = (float) $expenses->where('fortnight', 2)->whereNotNull('person_id')->sum('amount');
+        @endphp
+        <div class="d-flex gap-3 align-items-center flex-wrap">
+            <div class="d-flex gap-2" data-bs-toggle="tooltip" data-bs-placement="bottom"
+                 title="Total ya asignado a alguna persona — excluye gastos fijos pendientes">
+                <div class="px-3 py-2 text-center" style="background: var(--surface-3); border-radius: 10px; min-width:110px;">
+                    <small class="text-muted d-block" style="font-size:.7rem; letter-spacing:.06em; text-transform:uppercase;">1ª quinc.</small>
+                    <strong class="balance-negative d-block">{{ $money($assignedQ1) }}</strong>
+                </div>
+                <div class="px-3 py-2 text-center" style="background: var(--surface-3); border-radius: 10px; min-width:110px;">
+                    <small class="text-muted d-block" style="font-size:.7rem; letter-spacing:.06em; text-transform:uppercase;">2ª quinc.</small>
+                    <strong class="balance-negative d-block">{{ $money($assignedQ2) }}</strong>
+                </div>
+            </div>
+
             <form method="GET" class="d-flex gap-2 align-items-center">
                 <select name="month" class="form-select form-select-sm" style="min-width:140px">
                     @foreach (range(1,12) as $m)

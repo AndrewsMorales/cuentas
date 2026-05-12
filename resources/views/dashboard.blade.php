@@ -29,13 +29,18 @@
         </form>
     </div>
 
+    @php
+        $q1 = $summary['by_fortnight'][0];
+        $q2 = $summary['by_fortnight'][1];
+    @endphp
+
     <div class="row g-3 mb-4">
         <div class="col-6 col-lg-3">
             <div class="stat-card stat-positive h-100">
                 <div class="stat-label"><i class="bi bi-arrow-down-circle"></i> Ingresos</div>
                 <div class="stat-value balance-positive">{{ $money($summary['total_income']) }}</div>
                 @if ($summary['carry_over'] > 0)
-                    <small class="text-muted">+ {{ $money($summary['carry_over']) }} ahorro previo</small>
+                    <small class="text-muted d-block mt-2">+ {{ $money($summary['carry_over']) }} ahorro previo</small>
                 @endif
             </div>
         </div>
@@ -43,7 +48,26 @@
             <div class="stat-card stat-negative h-100">
                 <div class="stat-label"><i class="bi bi-arrow-up-circle"></i> Gastos</div>
                 <div class="stat-value balance-negative">{{ $money($summary['total_expense']) }}</div>
-                <small class="text-muted">sin contar ahorro</small>
+                <small class="balance-negative d-block" style="opacity:.75">
+                    <i class="bi bi-check2"></i> {{ $money($summary['total_expense_assigned']) }} pagado
+                </small>
+
+                <div class="d-flex justify-content-between mt-2 pt-2" style="border-top: 1px solid var(--border);">
+                    <div>
+                        <small class="text-muted">1ª</small>
+                        <div class="balance-negative">{{ $money($q1['expense']) }}</div>
+                        <small class="balance-negative" style="opacity:.75">
+                            <i class="bi bi-check2"></i> {{ $money($q1['expense_assigned']) }}
+                        </small>
+                    </div>
+                    <div class="text-end">
+                        <small class="text-muted">2ª</small>
+                        <div class="balance-negative">{{ $money($q2['expense']) }}</div>
+                        <small class="balance-negative" style="opacity:.75">
+                            <i class="bi bi-check2"></i> {{ $money($q2['expense_assigned']) }}
+                        </small>
+                    </div>
+                </div>
             </div>
         </div>
         <div class="col-6 col-lg-3">
@@ -52,25 +76,30 @@
                 <div class="stat-value {{ $summary['available'] >= 0 ? 'balance-positive' : 'balance-negative' }}">
                     {{ $money($summary['available']) }}
                 </div>
-                <small class="text-muted">ingresos + ahorro − gastos</small>
+                <div class="d-flex justify-content-between small mt-2 pt-2" style="border-top: 1px solid var(--border);">
+                    <span>
+                        <span class="text-muted">1ª</span>
+                        <strong class="{{ $q1['available'] >= 0 ? 'balance-positive' : 'balance-negative' }} d-block">{{ $money($q1['available']) }}</strong>
+                    </span>
+                    <span class="text-end">
+                        <span class="text-muted">2ª</span>
+                        <strong class="{{ $q2['available'] >= 0 ? 'balance-positive' : 'balance-negative' }} d-block">{{ $money($q2['available']) }}</strong>
+                    </span>
+                </div>
+                <small class="text-muted d-block mt-1">ingresos + ahorro − gastos</small>
             </div>
         </div>
         <div class="col-6 col-lg-3">
             <div class="stat-card stat-warning h-100">
                 <div class="stat-label"><i class="bi bi-piggy-bank"></i> Ahorros</div>
                 <div class="stat-value">{{ $money($summary['cumulative_savings']) }}</div>
-                <small class="text-muted">acumulado total</small>
+                <small class="text-muted d-block mt-2">acumulado total</small>
+                @if ($summary['savings_this_month'] > 0)
+                    <small class="text-muted d-block">+ {{ $money($summary['savings_this_month']) }} este mes</small>
+                @endif
             </div>
         </div>
     </div>
-
-    @if ($summary['pending_fixed'] > 0)
-        <div class="alert alert-warning d-flex justify-content-between align-items-center"
-             style="border-left:4px solid var(--accent); background: var(--surface); border-color: var(--border);">
-            <span><i class="bi bi-pin-angle"></i> Tienes <strong>{{ $summary['pending_fixed'] }}</strong> gasto(s) fijo(s) sin asignar persona este mes.</span>
-            <a href="{{ route('expenses.index') }}" class="btn btn-info btn-sm">Asignar</a>
-        </div>
-    @endif
 
     <div class="card card-stat mb-3">
         <div class="card-header"><i class="bi bi-people"></i> ¿Cuánto le queda a cada persona?</div>

@@ -119,6 +119,7 @@ class BudgetService
 
         $totalIncome  = (float) $budget->incomes->sum('amount');
         $totalExpense = (float) $realExpenses->sum('amount');
+        $totalExpenseAssigned = (float) $realExpenses->whereNotNull('person_id')->sum('amount');
         $savingsThisMonth = (float) $savingsEntries->sum('amount');
 
         // Carry-over: lo no gastado en meses anteriores se acumula automáticamente.
@@ -171,17 +172,27 @@ class BudgetService
             ->sortByDesc('amount')
             ->values();
 
-        $byFortnight = collect([1, 2])->map(fn ($f) => [
-            'fortnight' => $f,
-            'income'    => (float) $budget->incomes->where('fortnight', $f)->sum('amount'),
-            'expense'   => (float) $realExpenses->where('fortnight', $f)->sum('amount'),
-            'savings'   => (float) $savingsEntries->where('fortnight', $f)->sum('amount'),
-        ]);
+        $byFortnight = collect([1, 2])->map(function ($f) use ($budget, $realExpenses, $savingsEntries) {
+            $expensesInF = $realExpenses->where('fortnight', $f);
+            $income   = (float) $budget->incomes->where('fortnight', $f)->sum('amount');
+            $expense  = (float) $expensesInF->sum('amount');
+            $assigned = (float) $expensesInF->whereNotNull('person_id')->sum('amount');
+
+            return [
+                'fortnight'        => $f,
+                'income'           => $income,
+                'expense'          => $expense,
+                'expense_assigned' => $assigned,
+                'savings'          => (float) $savingsEntries->where('fortnight', $f)->sum('amount'),
+                'available'        => $income - $expense,
+            ];
+        });
 
         return [
-            'total_income'       => $totalIncome,
-            'total_expense'      => $totalExpense,
-            'savings_this_month' => $savingsThisMonth,
+            'total_income'           => $totalIncome,
+            'total_expense'          => $totalExpense,
+            'total_expense_assigned' => $totalExpenseAssigned,
+            'savings_this_month'     => $savingsThisMonth,
             'carry_over'         => $carryOver,
             'cumulative_savings' => $cumulativeSavings,
             'available'          => $totalIncome + $carryOver - $totalExpense,

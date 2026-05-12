@@ -141,19 +141,26 @@
             margin-right: .5rem;
             box-shadow: 0 2px 8px rgba(111,29,46,.35);
         }
+        .navbar-nav { gap: .35rem; }
         .navbar .nav-link {
             color: var(--ink-soft);
             font-weight: 500;
             border-radius: .5rem;
-            padding: .4rem .75rem;
+            padding: .4rem .85rem;
             transition: color .15s ease, background .15s ease;
         }
         .navbar .nav-link:hover,
-        .navbar .nav-link:focus {
+        .navbar .nav-link:focus,
+        .navbar .nav-link.active {
             color: var(--brand);
             background: rgba(111,29,46,.06);
         }
-        [data-bs-theme="dark"] .navbar .nav-link:hover { background: rgba(196,69,105,.12); }
+        .navbar .nav-link.active {
+            font-weight: 600;
+            box-shadow: inset 0 -2px 0 var(--brand);
+        }
+        [data-bs-theme="dark"] .navbar .nav-link:hover,
+        [data-bs-theme="dark"] .navbar .nav-link.active { background: rgba(196,69,105,.12); }
 
         /* Botones */
         .btn-primary,
@@ -524,14 +531,14 @@
 
         <div class="collapse navbar-collapse" id="mainNav">
             <ul class="navbar-nav me-auto">
-                <li class="nav-item"><a class="nav-link" href="{{ route('dashboard') }}"><i class="bi bi-speedometer2"></i> Resumen</a></li>
-                <li class="nav-item"><a class="nav-link" href="{{ route('incomes.index') }}"><i class="bi bi-arrow-down-circle"></i> Ingresos</a></li>
-                <li class="nav-item"><a class="nav-link" href="{{ route('expenses.index') }}"><i class="bi bi-arrow-up-circle"></i> Gastos</a></li>
-                <li class="nav-item"><a class="nav-link" href="{{ route('budgets.index') }}"><i class="bi bi-calendar3"></i> Meses</a></li>
-                <li class="nav-item"><a class="nav-link" href="{{ route('categories.index') }}"><i class="bi bi-tags"></i> Categorías</a></li>
-                <li class="nav-item"><a class="nav-link" href="{{ route('fixed-expenses.index') }}"><i class="bi bi-pin-angle"></i> Gastos fijos</a></li>
+                <li class="nav-item"><a @class(['nav-link', 'active' => request()->routeIs('dashboard')]) href="{{ route('dashboard') }}"><i class="bi bi-speedometer2"></i> Resumen</a></li>
+                <li class="nav-item"><a @class(['nav-link', 'active' => request()->routeIs('incomes.*')]) href="{{ route('incomes.index') }}"><i class="bi bi-arrow-down-circle"></i> Ingresos</a></li>
+                <li class="nav-item"><a @class(['nav-link', 'active' => request()->routeIs('expenses.*')]) href="{{ route('expenses.index') }}"><i class="bi bi-arrow-up-circle"></i> Gastos</a></li>
+                <li class="nav-item"><a @class(['nav-link', 'active' => request()->routeIs('budgets.*')]) href="{{ route('budgets.index') }}"><i class="bi bi-calendar3"></i> Meses</a></li>
+                <li class="nav-item"><a @class(['nav-link', 'active' => request()->routeIs('categories.*')]) href="{{ route('categories.index') }}"><i class="bi bi-tags"></i> Categorías</a></li>
+                <li class="nav-item"><a @class(['nav-link', 'active' => request()->routeIs('fixed-expenses.*')]) href="{{ route('fixed-expenses.index') }}"><i class="bi bi-pin-angle"></i> Gastos fijos</a></li>
                 @can('manage-users')
-                    <li class="nav-item"><a class="nav-link" href="{{ route('users.index') }}"><i class="bi bi-people"></i> Usuarios</a></li>
+                    <li class="nav-item"><a @class(['nav-link', 'active' => request()->routeIs('users.*')]) href="{{ route('users.index') }}"><i class="bi bi-people"></i> Usuarios</a></li>
                 @endcan
             </ul>
 
