@@ -1,0 +1,4 @@
+# Solo ignorar archivos temporales de SQLite. La BD principal SÍ va al repo.
+*.sqlite-journal
+*.sqlite-wal
+*.sqlite-shm
