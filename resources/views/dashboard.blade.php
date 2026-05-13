@@ -35,7 +35,7 @@
     @endphp
 
     <div class="row g-3 mb-4">
-        <div class="col-6 col-lg-3">
+        <div class="col-12 col-sm-6 col-lg-3">
             <div class="stat-card stat-positive h-100">
                 <div class="stat-label"><i class="bi bi-arrow-down-circle"></i> Ingresos</div>
                 <div class="stat-value balance-positive">{{ $money($summary['total_income']) }}</div>
@@ -44,7 +44,7 @@
                 @endif
             </div>
         </div>
-        <div class="col-6 col-lg-3">
+        <div class="col-12 col-sm-6 col-lg-3">
             <div class="stat-card stat-negative h-100">
                 <div class="stat-label"><i class="bi bi-arrow-up-circle"></i> Gastos</div>
                 <div class="stat-value balance-negative">{{ $money($summary['total_expense']) }}</div>
@@ -70,7 +70,7 @@
                 </div>
             </div>
         </div>
-        <div class="col-6 col-lg-3">
+        <div class="col-12 col-sm-6 col-lg-3">
             <div class="stat-card stat-brand h-100">
                 <div class="stat-label"><i class="bi bi-wallet2"></i> Disponible</div>
                 <div class="stat-value {{ $summary['available'] >= 0 ? 'balance-positive' : 'balance-negative' }}">
@@ -89,7 +89,7 @@
                 <small class="text-muted d-block mt-1">ingresos + ahorro − gastos</small>
             </div>
         </div>
-        <div class="col-6 col-lg-3">
+        <div class="col-12 col-sm-6 col-lg-3">
             <div class="stat-card stat-warning h-100">
                 <div class="stat-label"><i class="bi bi-piggy-bank"></i> Ahorros</div>
                 <div class="stat-value">{{ $money($summary['cumulative_savings']) }}</div>

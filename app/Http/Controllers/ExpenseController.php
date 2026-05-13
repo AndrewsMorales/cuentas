@@ -25,15 +25,45 @@ class ExpenseController extends Controller
         $month  = (int) $request->integer('month', (int) now()->month);
         $budget = $this->budgets->resolveBudget($year, $month);
 
+        // Filtros opcionales
+        $filters = [
+            'person_id'   => $request->input('person_id'),
+            'category_id' => $request->input('category_id'),
+            'fortnight'   => $request->input('fortnight'),
+            'date'        => $request->input('date'),
+        ];
+
+        $query = $budget->expenses()->with(['category', 'person', 'fixedExpense']);
+
+        if ($filters['person_id'] === 'unassigned') {
+            $query->whereNull('person_id');
+        } elseif (! empty($filters['person_id']) && is_numeric($filters['person_id'])) {
+            $query->where('person_id', (int) $filters['person_id']);
+        }
+
+        if (! empty($filters['category_id']) && is_numeric($filters['category_id'])) {
+            $query->where('category_id', (int) $filters['category_id']);
+        }
+
+        if (! empty($filters['fortnight']) && in_array((int) $filters['fortnight'], [1, 2], true)) {
+            $query->where('fortnight', (int) $filters['fortnight']);
+        }
+
+        if (! empty($filters['date'])) {
+            $query->whereDate('spent_at', $filters['date']);
+        }
+
+        $filteredExpenses = $query->orderBy('spent_at', 'desc')->orderBy('id', 'desc')->get();
+        $hasActiveFilters = (bool) array_filter($filters, fn ($v) => $v !== null && $v !== '');
+
         return view('expenses.index', [
-            'budget'     => $budget,
-            'expenses'   => $budget->expenses()
-                ->with(['category', 'person', 'fixedExpense'])
-                ->orderBy('spent_at', 'desc')
-                ->orderBy('id', 'desc')
-                ->get(),
-            'people'     => Person::orderBy('name')->get(),
-            'categories' => Category::orderBy('name')->get(),
+            'budget'           => $budget,
+            'expenses'         => $filteredExpenses,
+            'totalsExpenses'   => $budget->expenses,
+            'people'           => Person::orderBy('name')->get(),
+            'categories'       => Category::orderBy('name')->get(),
+            'filters'          => $filters,
+            'hasActiveFilters' => $hasActiveFilters,
         ]);
     }
 

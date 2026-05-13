@@ -10,8 +10,8 @@
             <div class="page-subtitle">{{ $budget->label() }}</div>
         </div>
         @php
-            $assignedQ1 = (float) $expenses->where('fortnight', 1)->whereNotNull('person_id')->sum('amount');
-            $assignedQ2 = (float) $expenses->where('fortnight', 2)->whereNotNull('person_id')->sum('amount');
+            $assignedQ1 = (float) $totalsExpenses->where('fortnight', 1)->whereNotNull('person_id')->sum('amount');
+            $assignedQ2 = (float) $totalsExpenses->where('fortnight', 2)->whereNotNull('person_id')->sum('amount');
         @endphp
         <div class="d-flex gap-3 align-items-center flex-wrap">
             <div class="d-flex gap-2" data-bs-toggle="tooltip" data-bs-placement="bottom"
@@ -59,6 +59,75 @@
             <i class="bi bi-lock-fill"></i> Este mes ya está cerrado. Los datos quedan en solo-lectura.
         </div>
     @endif
+
+    {{-- Panel de filtros --}}
+    <div class="card card-stat mb-3">
+        <div class="card-body py-3">
+            <form method="GET" class="row g-2 align-items-end">
+                <input type="hidden" name="year"  value="{{ $budget->year }}">
+                <input type="hidden" name="month" value="{{ $budget->month }}">
+
+                <div class="col-6 col-md-3 col-lg">
+                    <label class="form-label mb-1"><i class="bi bi-person"></i> Persona</label>
+                    <select name="person_id" class="form-select form-select-sm">
+                        <option value="">Todas</option>
+                        <option value="unassigned" @selected(($filters['person_id'] ?? '') === 'unassigned')>— Sin asignar —</option>
+                        @foreach ($people as $p)
+                            <option value="{{ $p->id }}" @selected((string) ($filters['person_id'] ?? '') === (string) $p->id)>{{ $p->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <div class="col-6 col-md-3 col-lg">
+                    <label class="form-label mb-1"><i class="bi bi-tag"></i> Categoría</label>
+                    <select name="category_id" class="form-select form-select-sm">
+                        <option value="">Todas</option>
+                        @foreach ($categories as $c)
+                            <option value="{{ $c->id }}" @selected((string) ($filters['category_id'] ?? '') === (string) $c->id)>{{ $c->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <div class="col-6 col-md-3 col-lg">
+                    <label class="form-label mb-1"><i class="bi bi-calendar3-range"></i> Quincena</label>
+                    <select name="fortnight" class="form-select form-select-sm">
+                        <option value="">Ambas</option>
+                        <option value="1" @selected((string) ($filters['fortnight'] ?? '') === '1')>1ª quincena</option>
+                        <option value="2" @selected((string) ($filters['fortnight'] ?? '') === '2')>2ª quincena</option>
+                    </select>
+                </div>
+
+                <div class="col-6 col-md-3 col-lg">
+                    <label class="form-label mb-1"><i class="bi bi-calendar-event"></i> Fecha exacta</label>
+                    <input type="date" name="date" class="form-control form-control-sm" value="{{ $filters['date'] ?? '' }}">
+                </div>
+
+                <div class="col-12 col-lg-auto d-flex gap-2">
+                    <button class="btn btn-info btn-sm" data-bs-toggle="tooltip" title="Aplicar filtros">
+                        <i class="bi bi-funnel"></i> Filtrar
+                    </button>
+                    @if ($hasActiveFilters)
+                        <a href="{{ route('expenses.index', ['year' => $budget->year, 'month' => $budget->month]) }}"
+                           class="btn btn-light btn-sm"
+                           data-bs-toggle="tooltip" title="Quitar todos los filtros">
+                            <i class="bi bi-x-lg"></i> Limpiar
+                        </a>
+                    @endif
+                </div>
+            </form>
+
+            @if ($hasActiveFilters)
+                @php
+                    $filteredTotal = (float) $expenses->sum('amount');
+                @endphp
+                <div class="mt-2 pt-2 small text-muted" style="border-top: 1px solid var(--border);">
+                    <i class="bi bi-info-circle"></i>
+                    Mostrando <strong>{{ $expenses->count() }}</strong> gasto(s) ·
+                    Total filtrado: <strong class="balance-negative">{{ $money($filteredTotal) }}</strong>
+                </div>
+            @endif
+        </div>
+    </div>
 
     <div class="card card-stat">
         <div class="table-responsive">
