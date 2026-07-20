@@ -21,12 +21,13 @@ class MonthlyBudget extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['year', 'month', 'closed_at'];
+    protected $fillable = ['year', 'month', 'closed_at', 'fixed_seeded_at'];
 
     protected $casts = [
-        'year'      => 'int',
-        'month'     => 'int',
-        'closed_at' => 'datetime',
+        'year'            => 'int',
+        'month'           => 'int',
+        'closed_at'       => 'datetime',
+        'fixed_seeded_at' => 'datetime',
     ];
 
     public function incomes(): HasMany
@@ -53,18 +54,43 @@ class MonthlyBudget extends Model
 
     public function periodEnd(): Carbon
     {
-        return Carbon::create($this->year, $this->month, 1)->endOfMonth();
+        // El periodo contable se extiende hasta la fecha de corte (día 5 del
+        // mes siguiente), no hasta el último día calendario del mes.
+        return $this->cutoff();
     }
 
     /**
-     * Un presupuesto queda bloqueado para edición cuando su mes ya pasó.
-     * El mes actual y los futuros siguen siendo editables.
+     * Fecha de corte: el presupuesto de un mes se cierra el día 5 del mes
+     * siguiente. Hasta esa fecha (días 1 a 5 del mes siguiente) el mes
+     * anterior sigue siendo editable como periodo de gracia.
+     */
+    public function cutoff(): Carbon
+    {
+        return Carbon::create($this->year, $this->month, 1)
+            ->addMonthNoOverflow()  // primer día del mes siguiente
+            ->day(5)                // día 5 del mes siguiente
+            ->endOfDay();
+    }
+
+    /**
+     * Un presupuesto queda bloqueado para edición una vez pasada su fecha
+     * de corte (día 5 del mes siguiente). El mes actual, el mes recién
+     * vencido dentro del periodo de gracia, y los futuros siguen editables.
      */
     public function isLocked(): bool
     {
-        $now = Carbon::now();
-        if ($this->year < $now->year) return true;
-        if ($this->year === $now->year && $this->month < $now->month) return true;
-        return false;
+        return Carbon::now()->greaterThan($this->cutoff());
+    }
+
+    /**
+     * Los gastos fijos del mes se materializan recién cuando el mes anterior
+     * cierra, es decir, pasada SU fecha de corte (el día 5 de este mes).
+     * Durante el periodo de gracia (días 1 a 5) los fijos aún no se cargan.
+     */
+    public function fixedExpensesDue(): bool
+    {
+        $previousCutoff = Carbon::create($this->year, $this->month, 5)->endOfDay();
+
+        return Carbon::now()->greaterThan($previousCutoff);
     }
 }

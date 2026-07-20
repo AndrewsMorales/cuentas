@@ -571,7 +571,7 @@
                             </li>
                             <li><hr class="dropdown-divider"></li>
                             <li>
-                                <form method="POST" action="{{ route('logout') }}" class="px-3 py-1">
+                                <form method="POST" action="{{ route('logout') }}" class="px-3 py-1 js-logout">
                                     @csrf
                                     <button class="btn btn-light w-100 btn-sm">
                                         <i class="bi bi-box-arrow-right"></i> Cerrar sesión
@@ -683,6 +683,139 @@
             new bootstrap.Tooltip(el, { placement: el.dataset.bsPlacement || 'top', container: 'body' });
         });
     });
+</script>
+
+<style>
+    /* Cabeceras de tabla ordenables */
+    table.js-sortable thead th[data-sort] {
+        cursor: pointer;
+        user-select: none;
+        white-space: nowrap;
+    }
+    table.js-sortable thead th[data-sort] .sort-ind {
+        opacity: .35;
+        font-size: .8em;
+        margin-left: .25rem;
+    }
+    table.js-sortable thead th[data-sort][data-dir="asc"] .sort-ind,
+    table.js-sortable thead th[data-sort][data-dir="desc"] .sort-ind {
+        opacity: 1;
+    }
+</style>
+<script>
+    // === Ordenamiento de tablas (.js-sortable) ===
+    (function () {
+        const ICON_NEUTRAL = '<i class="bi bi-arrow-down-up"></i>';
+        const ICON_ASC     = '<i class="bi bi-caret-up-fill"></i>';
+        const ICON_DESC    = '<i class="bi bi-caret-down-fill"></i>';
+
+        document.querySelectorAll('table.js-sortable').forEach(function (table) {
+            const headers = table.querySelectorAll('thead th[data-sort]');
+
+            headers.forEach(function (th) {
+                const ind = document.createElement('span');
+                ind.className = 'sort-ind';
+                ind.innerHTML = ICON_NEUTRAL;
+                th.appendChild(ind);
+
+                th.addEventListener('click', function () {
+                    const tbody = table.tBodies[0];
+                    if (!tbody) return;
+                    const idx  = Array.from(th.parentNode.children).indexOf(th);
+                    const type = th.dataset.sort; // text | number
+                    const dir  = th.dataset.dir === 'asc' ? 'desc' : 'asc';
+
+                    headers.forEach(function (o) {
+                        o.dataset.dir = '';
+                        o.querySelector('.sort-ind').innerHTML = ICON_NEUTRAL;
+                    });
+                    th.dataset.dir = dir;
+                    th.querySelector('.sort-ind').innerHTML = dir === 'asc' ? ICON_ASC : ICON_DESC;
+
+                    const rows = Array.from(tbody.querySelectorAll('tr'))
+                        .filter(function (r) { return !r.querySelector('td[colspan]'); });
+
+                    const valOf = function (row) {
+                        const cell = row.children[idx];
+                        if (!cell) return '';
+                        return cell.dataset.sortValue !== undefined
+                            ? cell.dataset.sortValue
+                            : cell.textContent.trim();
+                    };
+
+                    rows.sort(function (a, b) {
+                        let va = valOf(a), vb = valOf(b);
+                        if (type === 'number') {
+                            va = parseFloat(String(va).replace(/[^0-9.\-]/g, '')) || 0;
+                            vb = parseFloat(String(vb).replace(/[^0-9.\-]/g, '')) || 0;
+                            return dir === 'asc' ? va - vb : vb - va;
+                        }
+                        return dir === 'asc'
+                            ? String(va).localeCompare(String(vb), 'es', { numeric: true })
+                            : String(vb).localeCompare(String(va), 'es', { numeric: true });
+                    });
+
+                    rows.forEach(function (r) { tbody.appendChild(r); });
+                });
+            });
+        });
+
+        // === Auto-aplicar filtros al cambiar un input (.js-autofilter) ===
+        document.querySelectorAll('form.js-autofilter').forEach(function (form) {
+            form.querySelectorAll('select, input').forEach(function (el) {
+                if (el.type === 'hidden') return;
+                el.addEventListener('change', function () { form.submit(); });
+            });
+        });
+
+        // === Persistencia de filtros en localStorage (.js-autofilter[data-persist-key]) ===
+        // Los filtros se recuerdan entre visitas; se borran al cerrar sesión.
+        const FILTER_PREFIX = 'cuentas-filters:';
+
+        document.querySelectorAll('form.js-autofilter[data-persist-key]').forEach(function (form) {
+            const key   = FILTER_PREFIX + form.dataset.persistKey;
+            const names = [];
+            form.querySelectorAll('select, input').forEach(function (el) {
+                if (el.type !== 'hidden' && el.name) names.push(el.name);
+            });
+
+            const params = new URLSearchParams(window.location.search);
+            const urlActive = names.some(function (n) { return params.get(n); });
+
+            if (urlActive) {
+                // La URL ya trae filtros: persistirlos tal cual.
+                const data = {};
+                names.forEach(function (n) { data[n] = params.get(n) || ''; });
+                localStorage.setItem(key, JSON.stringify(data));
+            } else {
+                // Sin filtros en la URL: restaurar los guardados (si hay).
+                let saved = {};
+                try { saved = JSON.parse(localStorage.getItem(key) || '{}'); } catch (e) {}
+                if (names.some(function (n) { return saved[n]; })) {
+                    names.forEach(function (n) {
+                        if (form.elements[n]) form.elements[n].value = saved[n] || '';
+                    });
+                    form.submit();
+                }
+            }
+        });
+
+        // Al pulsar "Limpiar filtros" también se borra el guardado.
+        document.querySelectorAll('.js-clear-filters[data-persist-key]').forEach(function (a) {
+            a.addEventListener('click', function () {
+                localStorage.removeItem(FILTER_PREFIX + a.dataset.persistKey);
+            });
+        });
+
+        // Al cerrar sesión se borran todos los filtros recordados.
+        document.querySelectorAll('form.js-logout').forEach(function (form) {
+            form.addEventListener('submit', function () {
+                Object.keys(localStorage).forEach(function (k) {
+                    if (k.indexOf(FILTER_PREFIX) === 0) localStorage.removeItem(k);
+                });
+            });
+        });
+    })();
 </script>
 @stack('scripts')
 </body>

@@ -63,7 +63,7 @@
     {{-- Panel de filtros --}}
     <div class="card card-stat mb-3">
         <div class="card-body py-3">
-            <form method="GET" class="row g-2 align-items-end">
+            <form method="GET" class="row g-2 align-items-end js-autofilter" data-persist-key="expenses">
                 <input type="hidden" name="year"  value="{{ $budget->year }}">
                 <input type="hidden" name="month" value="{{ $budget->month }}">
 
@@ -102,18 +102,15 @@
                     <input type="date" name="date" class="form-control form-control-sm" value="{{ $filters['date'] ?? '' }}">
                 </div>
 
-                <div class="col-12 col-lg-auto d-flex gap-2">
-                    <button class="btn btn-info btn-sm" data-bs-toggle="tooltip" title="Aplicar filtros">
-                        <i class="bi bi-funnel"></i> Filtrar
-                    </button>
-                    @if ($hasActiveFilters)
+                @if ($hasActiveFilters)
+                    <div class="col-6 col-md-3 col-lg-auto d-flex align-items-end">
                         <a href="{{ route('expenses.index', ['year' => $budget->year, 'month' => $budget->month]) }}"
-                           class="btn btn-light btn-sm"
+                           class="btn btn-light btn-sm w-100 js-clear-filters" data-persist-key="expenses"
                            data-bs-toggle="tooltip" title="Quitar todos los filtros">
-                            <i class="bi bi-x-lg"></i> Limpiar
+                            <i class="bi bi-x-lg"></i> Limpiar filtros
                         </a>
-                    @endif
-                </div>
+                    </div>
+                @endif
             </form>
 
             @if ($hasActiveFilters)
@@ -131,22 +128,22 @@
 
     <div class="card card-stat">
         <div class="table-responsive">
-            <table class="table mb-0 align-middle">
+            <table class="table mb-0 align-middle js-sortable">
                 <thead>
                     <tr>
-                        <th>Fecha</th>
-                        <th>Descripción</th>
-                        <th>Categoría</th>
-                        <th class="text-center">Quincena</th>
-                        <th>Persona</th>
-                        <th class="text-end">Monto</th>
+                        <th data-sort="text">Fecha</th>
+                        <th data-sort="text">Descripción</th>
+                        <th data-sort="text">Categoría</th>
+                        <th class="text-center" data-sort="number">Quincena</th>
+                        <th data-sort="text">Persona</th>
+                        <th class="text-end" data-sort="number">Monto</th>
                         <th class="text-center">Acciones</th>
                     </tr>
                 </thead>
                 <tbody>
                 @forelse ($expenses as $e)
                     <tr>
-                        <td>{{ $e->spent_at->format('d/m') }}</td>
+                        <td data-sort-value="{{ $e->spent_at->format('Y-m-d') }}">{{ $e->spent_at->format('d/m') }}</td>
                         <td>
                             {{ $e->description }}
                             @if ($e->is_fixed_template) <span class="badge bg-warning ms-1">Fijo</span> @endif
@@ -156,8 +153,8 @@
                                 <i class="bi {{ $e->category->icon }}"></i> {{ $e->category->name }}
                             </span>
                         </td>
-                        <td class="text-center">{{ $e->fortnight === 1 ? '1ª' : '2ª' }}</td>
-                        <td>
+                        <td class="text-center" data-sort-value="{{ $e->fortnight }}">{{ $e->fortnight === 1 ? '1ª' : '2ª' }}</td>
+                        <td data-sort-value="{{ $e->person?->name ?? '' }}">
                             @if ($e->person)
                                 <span class="person-dot" style="background: {{ $e->person->color }}"></span> {{ $e->person->name }}
                             @elseif (! $budget->isLocked() && auth()->user()?->isManager())
@@ -176,7 +173,7 @@
                                 <span class="text-muted">—</span>
                             @endif
                         </td>
-                        <td class="text-end balance-negative">{{ $money($e->amount) }}</td>
+                        <td class="text-end balance-negative" data-sort-value="{{ $e->amount }}">{{ $money($e->amount) }}</td>
                         <td class="actions-cell">
                             @if (! $budget->isLocked())
                                 @can('manage')

@@ -19,29 +19,37 @@
 
     <div class="card card-stat">
         <div class="table-responsive">
-            <table class="table mb-0 align-middle">
+            <table class="table mb-0 align-middle js-sortable">
                 <thead>
                     <tr>
-                        <th>Nombre</th>
-                        <th>Categoría</th>
-                        <th class="text-end">Promedio</th>
-                        <th class="text-center">Quincena</th>
-                        <th class="text-center">Activo</th>
+                        <th data-sort="text">Nombre</th>
+                        <th data-sort="text">Categoría</th>
+                        <th class="text-end" data-sort="number">Promedio</th>
+                        <th class="text-center" data-sort="number">Quincena</th>
+                        <th class="text-center" data-sort="number">Activo</th>
                         <th class="text-center">Acciones</th>
                     </tr>
                 </thead>
                 <tbody>
                 @forelse ($items as $i)
                     <tr>
-                        <td>{{ $i->name }}</td>
+                        <td data-sort-value="{{ $i->name }}">
+                            {{ $i->name }}
+                            @if ($i->interval_months > 1)
+                                <span class="badge bg-info ms-1" data-bs-toggle="tooltip"
+                                      title="Se carga {{ strtolower($i->frequencyLabel()) }}@if($i->anchor_year), referencia {{ \Carbon\Carbon::create($i->anchor_year, $i->anchor_month)->locale('es')->isoFormat('MMM YYYY') }}@endif">
+                                    <i class="bi bi-arrow-repeat"></i> {{ $i->frequencyLabel() }}
+                                </span>
+                            @endif
+                        </td>
                         <td>
                             <span class="category-chip" style="background: {{ $i->category->color }}22; color: {{ $i->category->color }}">
                                 <i class="bi {{ $i->category->icon }}"></i> {{ $i->category->name }}
                             </span>
                         </td>
-                        <td class="text-end">{{ $money($i->average_amount) }}</td>
-                        <td class="text-center">{{ $i->fortnight === 1 ? '1ª' : '2ª' }}</td>
-                        <td class="text-center">
+                        <td class="text-end" data-sort-value="{{ $i->average_amount }}">{{ $money($i->average_amount) }}</td>
+                        <td class="text-center" data-sort-value="{{ $i->fortnight }}">{{ $i->fortnight === 1 ? '1ª' : '2ª' }}</td>
+                        <td class="text-center" data-sort-value="{{ $i->active ? 1 : 0 }}">
                             @if ($i->active)
                                 <span class="badge bg-success">Sí</span>
                             @else

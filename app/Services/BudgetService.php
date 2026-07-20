@@ -32,9 +32,7 @@ class BudgetService
                 ['year' => $year, 'month' => $month],
             );
 
-            if ($budget->wasRecentlyCreated) {
-                $this->seedFixedExpenses($budget);
-            }
+            $this->maybeSeedFixedExpenses($budget);
 
             return $budget;
         });
@@ -76,14 +74,44 @@ class BudgetService
     }
 
     /**
+     * Siembra los gastos fijos del mes solo si corresponde: una sola vez
+     * (controlado por fixed_seeded_at) y únicamente después de que el mes
+     * anterior haya cerrado (pasada su fecha de corte, el día 5 de este mes).
+     *
+     * Mientras el mes anterior siga abierto (periodo de gracia del 1 al 5),
+     * el presupuesto se crea sin gastos fijos; estos se cargan en el primer
+     * acceso posterior al cierre.
+     */
+    public function maybeSeedFixedExpenses(MonthlyBudget $budget): void
+    {
+        if ($budget->fixed_seeded_at !== null) {
+            return; // ya sembrados
+        }
+
+        if (! $budget->fixedExpensesDue()) {
+            return; // el mes anterior aún no cierra
+        }
+
+        $this->seedFixedExpenses($budget);
+        $budget->forceFill(['fixed_seeded_at' => Carbon::now()])->save();
+    }
+
+    /**
      * Carga los gastos fijos activos como gastos pendientes del mes.
      * Cada gasto pendiente queda sin person_id para que el usuario asigne.
      */
     public function seedFixedExpenses(MonthlyBudget $budget): int
     {
-        $fixed = FixedExpense::where('active', true)->get();
+        $fixed = FixedExpense::where('active', true)->get()
+            // Solo los fijos que recaen en este mes según su frecuencia
+            // (p. ej. los bimestrales se omiten en el mes intermedio).
+            ->filter(fn (FixedExpense $tpl) => $tpl->occursIn($budget->year, $budget->month));
 
         foreach ($fixed as $tpl) {
+            // La fecha del gasto fijo depende de su quincena: la 1ª se carga
+            // el día 11 y la 2ª el día 26 (no el día 1 del mes).
+            $day = (int) $tpl->fortnight === 2 ? 26 : 11;
+
             Expense::create([
                 'monthly_budget_id' => $budget->id,
                 'category_id'       => $tpl->category_id,
@@ -91,7 +119,7 @@ class BudgetService
                 'person_id'         => null,
                 'description'       => $tpl->name,
                 'amount'            => $tpl->average_amount,
-                'spent_at'          => $budget->periodStart()->toDateString(),
+                'spent_at'          => Carbon::create($budget->year, $budget->month, $day)->toDateString(),
                 'fortnight'         => $tpl->fortnight,
                 'is_fixed_template' => true,
             ]);

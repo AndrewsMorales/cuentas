@@ -39,8 +39,35 @@
                 <div class="form-check form-switch">
                     <input type="hidden" name="active" value="0">
                     <input class="form-check-input" type="checkbox" name="active" value="1" id="activeSwitch" @checked(old('active', $item->active))>
-                    <label class="form-check-label" for="activeSwitch">Activo (se carga cada mes)</label>
+                    <label class="form-check-label" for="activeSwitch">Activo (se carga automáticamente)</label>
                 </div>
+            </div>
+        </div>
+
+        {{-- Intervalos: frecuencia con la que se carga el gasto fijo --}}
+        @php
+            $intOpts = [1 => 'Cada mes', 2 => 'Cada 2 meses (bimestral)', 3 => 'Cada 3 meses (trimestral)', 6 => 'Cada 6 meses (semestral)', 12 => 'Cada 12 meses (anual)'];
+            $curInterval = (int) old('interval_months', $item->interval_months ?: 1);
+            $curAnchor = old('anchor', ($item->anchor_year && $item->anchor_month)
+                ? sprintf('%04d-%02d', $item->anchor_year, $item->anchor_month) : '');
+        @endphp
+        <hr class="my-4" style="border-color: var(--border);">
+        <div class="mb-2">
+            <h2 class="h6 mb-1"><i class="bi bi-arrow-repeat"></i> Frecuencia</h2>
+            <small class="text-muted">Para recibos que no llegan todos los meses (p. ej. el agua, cada 2 meses).</small>
+        </div>
+        <div class="row g-2">
+            <div class="col-md-6">
+                <label class="form-label">¿Cada cuánto llega?</label>
+                <select name="interval_months" id="intervalSelect" class="form-select">
+                    @foreach ($intOpts as $val => $lbl)
+                        <option value="{{ $val }}" @selected($curInterval === $val)>{{ $lbl }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="col-md-6" id="anchorWrap" @class(['d-none' => $curInterval <= 1])>
+                <label class="form-label">Mes de referencia <small class="text-muted">(un mes en que sí llega)</small></label>
+                <input type="month" name="anchor" id="anchorInput" class="form-control" value="{{ $curAnchor }}">
             </div>
         </div>
 
@@ -55,3 +82,16 @@
         </div>
     </form>
 @endsection
+
+@push('scripts')
+<script>
+    (function () {
+        const sel  = document.getElementById('intervalSelect');
+        const wrap = document.getElementById('anchorWrap');
+        if (!sel || !wrap) return;
+        sel.addEventListener('change', function () {
+            wrap.classList.toggle('d-none', parseInt(sel.value, 10) <= 1);
+        });
+    })();
+</script>
+@endpush
