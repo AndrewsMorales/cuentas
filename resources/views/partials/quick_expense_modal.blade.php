@@ -1,7 +1,24 @@
 @php
     /** @var \App\Services\BudgetService $budgetSvc */
     $budgetSvc = app(\App\Services\BudgetService::class);
-    $currentBudget = $budgetSvc->currentBudget();
+
+    // El modal apunta al MES QUE SE ESTÁ VIENDO (si la página lo expone como
+    // $budget y sigue abierto). Así, dentro del periodo de gracia, "Agregar"
+    // desde la página de julio registra en julio y no en el mes actual.
+    // Si el mes visto ya está cerrado, o no hay mes visto, cae al mes actual.
+    $modalBudget = (isset($budget) && ! $budget->isLocked())
+        ? $budget
+        : $budgetSvc->currentBudget();
+
+    $modalIsCurrentMonth = $modalBudget->year === (int) now()->year
+        && $modalBudget->month === (int) now()->month;
+
+    // Fecha por defecto: hoy si estamos en el mes en curso; si es un mes pasado
+    // aún editable, el último día de ESE mes para que el gasto caiga en él.
+    $modalMonthStart   = \Illuminate\Support\Carbon::create($modalBudget->year, $modalBudget->month, 1);
+    $modalMonthEnd     = $modalMonthStart->copy()->endOfMonth();
+    $modalDefaultDate  = $modalIsCurrentMonth ? now()->toDateString() : $modalMonthEnd->toDateString();
+
     $quickPeople     = \App\Models\Person::orderBy('name')->get();
     $quickCategories = \App\Models\Category::orderBy('name')->get();
 @endphp
@@ -10,10 +27,10 @@
     <div class="modal-dialog modal-dialog-centered">
         <form method="POST" action="{{ route('expenses.store') }}" class="modal-content">
             @csrf
-            <input type="hidden" name="monthly_budget_id" value="{{ $currentBudget->id }}">
+            <input type="hidden" name="monthly_budget_id" value="{{ $modalBudget->id }}">
 
             <div class="modal-header">
-                <h5 class="modal-title"><i class="bi bi-plus-lg"></i> Nuevo gasto · {{ ucfirst($currentBudget->label()) }}</h5>
+                <h5 class="modal-title"><i class="bi bi-plus-lg"></i> Nuevo gasto · {{ ucfirst($modalBudget->label()) }}</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
 
@@ -29,7 +46,10 @@
                     </div>
                     <div class="col-5">
                         <label class="form-label">Fecha</label>
-                        <input type="date" name="spent_at" class="form-control" value="{{ now()->toDateString() }}" required>
+                        <input type="date" name="spent_at" class="form-control"
+                               value="{{ $modalDefaultDate }}"
+                               min="{{ $modalMonthStart->toDateString() }}"
+                               max="{{ $modalMonthEnd->toDateString() }}" required>
                     </div>
                 </div>
                 <div class="row g-2 mt-2">
