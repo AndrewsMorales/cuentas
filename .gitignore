@@ -26,7 +26,11 @@ Homestead.json
 Homestead.yaml
 Thumbs.db
 
-# Archivos temporales de SQLite (NO la BD principal — esa SÍ viaja en git)
+# SQLite: ni la base ni sus temporales viajan en git.
+# La base local tiene ingresos y gastos reales del hogar; en un repositorio
+# público eso es una filtración. Para arrancar de cero: php artisan migrate --seed
+/database/*.sqlite
+/database/*.sqlite.bak*
 /database/*.sqlite-journal
 /database/*.sqlite-wal
 /database/*.sqlite-shm

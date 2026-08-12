@@ -55,6 +55,8 @@ class User extends Authenticatable
 
     public function roleLabel(): string
     {
-        return self::ROLES[$this->role] ?? $this->role;
+        // La columna trae default en base de datos, pero una instancia recién
+        // creada todavía no lo tiene cargado: sin esto el layout revienta.
+        return self::ROLES[$this->role] ?? (string) ($this->role ?? '—');
     }
 }
