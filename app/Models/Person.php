@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
- * Persona que aporta ingresos al hogar (ej: Laura, Andrés).
+ * Persona que aporta ingresos al hogar.
  *
  * @property int    $id
  * @property string $name

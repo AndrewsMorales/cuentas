@@ -1,7 +1,7 @@
 # Cuentas — Presupuesto del hogar
 
 App Laravel + Bootstrap 5 para administrar el presupuesto mensual del hogar de
-dos personas (Laura y Andrés). Diseñada responsive para **web y móvil** (FAB en
+dos personas. Diseñada responsive para **web y móvil** (FAB en
 móvil, botón en la barra superior en escritorio).
 
 ## Funcionalidad
@@ -49,14 +49,14 @@ resources/views/
 routes/web.php           # Rutas RESTful
 database/
 ├── migrations/          # Esquema completo
-└── seeders/             # Laura, Andrés, categorías y 3 gastos fijos demo
+└── seeders/             # datos de demostración: 2 personas, categorías y gastos fijos
 ```
 
 ### Modelo de datos
 
 | Tabla              | Descripción                                                         |
 |--------------------|---------------------------------------------------------------------|
-| `people`           | Personas que aportan ingresos (Laura, Andrés)                       |
+| `people`           | Personas que aportan ingresos                                       |
 | `categories`       | Categorías de gasto (nombre, icono, color)                          |
 | `fixed_expenses`   | Plantilla de gasto fijo (nombre, categoría, monto promedio, quincena)|
 | `monthly_budgets`  | Mes (unique [year, month])                                          |
@@ -121,7 +121,7 @@ gastos fijos de ejemplo (Arriendo, Internet, Recibo de luz).
 ## Personalización
 
 - **Agregar persona**: insertar en la tabla `people` (no hay UI todavía; pensado
-  para 2 personas: Laura y Andrés).
+  para 2 personas).
 - **Cambiar gastos fijos**: menú *Gastos fijos* → editar montos, quincena o
   desactivar.
 - **Crear categorías nuevas**: menú *Categorías* → con icono Bootstrap y color.

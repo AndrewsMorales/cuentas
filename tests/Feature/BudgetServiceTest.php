@@ -182,21 +182,21 @@ class BudgetServiceTest extends TestCase
     public function test_el_resumen_suma_ingresos_gastos_y_balance(): void
     {
         $category = $this->category();
-        $andres = $this->person('Andrés');
-        $laura = $this->person('Laura');
+        $uno = $this->person('Persona uno');
+        $dos = $this->person('Persona dos');
 
         $budget = $this->service->resolveBudget(2026, 3);
 
         Income::create([
             'monthly_budget_id' => $budget->id,
-            'person_id' => $andres->id,
+            'person_id' => $uno->id,
             'amount' => 2000000,
             'fortnight' => 1,
             'received_at' => '2026-03-10',
         ]);
         Income::create([
             'monthly_budget_id' => $budget->id,
-            'person_id' => $laura->id,
+            'person_id' => $dos->id,
             'amount' => 1500000,
             'fortnight' => 2,
             'received_at' => '2026-03-25',
@@ -204,7 +204,7 @@ class BudgetServiceTest extends TestCase
         Expense::create([
             'monthly_budget_id' => $budget->id,
             'category_id' => $category->id,
-            'person_id' => $andres->id,
+            'person_id' => $uno->id,
             'description' => 'Mercado',
             'amount' => 400000,
             'spent_at' => '2026-03-10',
@@ -221,13 +221,13 @@ class BudgetServiceTest extends TestCase
     {
         $ahorro = $this->category(Category::SAVINGS);
         $hogar = $this->category('Hogar');
-        $andres = $this->person();
+        $uno = $this->person();
 
         $budget = $this->service->resolveBudget(2026, 3);
 
         Income::create([
             'monthly_budget_id' => $budget->id,
-            'person_id' => $andres->id,
+            'person_id' => $uno->id,
             'amount' => 1000000,
             'fortnight' => 1,
             'received_at' => '2026-03-10',
@@ -235,7 +235,7 @@ class BudgetServiceTest extends TestCase
         Expense::create([
             'monthly_budget_id' => $budget->id,
             'category_id' => $hogar->id,
-            'person_id' => $andres->id,
+            'person_id' => $uno->id,
             'description' => 'Arriendo',
             'amount' => 600000,
             'spent_at' => '2026-03-05',
@@ -244,7 +244,7 @@ class BudgetServiceTest extends TestCase
         Expense::create([
             'monthly_budget_id' => $budget->id,
             'category_id' => $ahorro->id,
-            'person_id' => $andres->id,
+            'person_id' => $uno->id,
             'description' => 'A la alcancía',
             'amount' => 200000,
             'spent_at' => '2026-03-06',
